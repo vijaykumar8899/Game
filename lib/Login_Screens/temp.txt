@@ -1,17 +1,18 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:game/GameScreens/HomeScreen.dart';
 import 'package:game/Login_Screens/signin_screen.dart';
+import 'package:game/Login_Screens/tempClass.dart';
 import 'package:game/Login_Screens/user_check.dart';
 import 'package:game/firebase_options.dart';
-import 'package:get/get_navigation/src/root/get_material_app.dart';
+import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  await Firebase.initializeApp();
   SharedPreferences prefs = await SharedPreferences.getInstance();
   final String? userPhoneNumber = prefs.getString('userPhoneNumber');
 
@@ -26,26 +27,20 @@ void main() async {
     }
   }
 
-  runApp(MyApp(
-    userLoggdIn: userLoggedIn,
-  ));
+  runApp(MyApp(userLoggedIn: userLoggedIn));
 }
 
 class MyApp extends StatelessWidget {
-  final bool userLoggdIn;
-  const MyApp({required this.userLoggdIn});
+  final bool userLoggedIn;
 
-  // This widget is the root of your application.
+  const MyApp({Key? key, required this.userLoggedIn}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Flutter Demo',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        // colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: userLoggdIn ? HomeScreen() : LoginScreen(),
+      home: userLoggedIn ? HomeScreen() : LoginScreen(),
+      title: "Balaji Jewellers",
     );
   }
 }

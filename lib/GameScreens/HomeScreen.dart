@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:game/GameScreens/GameScreen.dart';
+import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -13,6 +15,16 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   List<int> Cards = [];
   FirebaseFirestore firestore = FirebaseFirestore.instance;
+  static String userPhoneNumber = '';
+  static String userName = '';
+
+  Future<void> getUserDetails() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userPhoneNumber = prefs.getString('userPhoneNumber') ?? '';
+      userName = prefs.getString('userName') ?? '';
+    });
+  }
 
   void addingOneToTenNumbersToCards() {
     for (int j = 1; j <= 4; j++) {
@@ -34,23 +46,26 @@ class _HomeScreenState extends State<HomeScreen> {
     addingOneToTenNumbersToCards();
     shuffleCards();
     shuffleCards();
+    getUserDetails();
   }
 
-  Future<void> fetchDataFromFirestore() async {
+  Future<void> saveCardsToFirestore(List<int> cards) async {
     try {
-      QuerySnapshot querySnapshot = await firestore.collection('test').get();
+      // Convert List<int> to List<dynamic>
+      List<dynamic> cardsData = cards.map((card) => card).toList();
 
-      if (querySnapshot.docs.isNotEmpty) {
-        // Assuming 'test' is the field you want to print
-        querySnapshot.docs.forEach((doc) {
-          var testData = doc['test'];
-          print('Data in "test" field: $testData');
-        });
-      } else {
-        print('No documents found in the "test" collection.');
-      }
+      // Reference to the Firestore collection
+      CollectionReference cardCollection =
+          FirebaseFirestore.instance.collection('cards');
+
+      // Add the list to Firestore
+      await cardCollection.doc().set({
+        'cardsData': cardsData,
+      });
+
+      print('Cards saved successfully.');
     } catch (e) {
-      print('Error fetching data: $e');
+      print('Error saving cards: $e');
     }
   }
 
@@ -83,6 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          Text("Wellcome Back!, $userName"),
           Center(
             child: Text(
               "Cards Are Ready, Are You Ready?",
@@ -104,14 +120,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           Row(
             children: [
-              Text("Or Want to view the cards?"),
+              const Text("Or Want to view the cards?"),
               TextButton(
                 onPressed: () {
                   showDialog(
                     context: context,
                     builder: (BuildContext context) {
                       return AlertDialog(
-                        title: Text("Shuffled Cards"),
+                        title: const Text("Shuffled Cards"),
                         content: Container(
                           width: double.maxFinite,
                           child: viewCards(Cards: Cards),
@@ -133,23 +149,14 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           TextButton(
-            onPressed: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => GameScreen(Cards: Cards),
-                  ));
+            onPressed: () async {
+              await saveCardsToFirestore(Cards);
+              Get.to(GameScreen());
             },
-            child: Text(
+            child: const Text(
               "Start Game",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
             ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              fetchDataFromFirestore();
-            },
-            child: Text('Fetch Data from Firestore'),
           ),
         ],
       ),

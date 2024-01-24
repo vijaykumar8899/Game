@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:game/GameScreens/HomeScreen.dart';
 import 'package:game/HelperFunctions/Toast.dart';
+import 'package:game/Login_Screens/userDetailsScreen.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -41,7 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
         print('Document data: ${document.data()}');
 
         String userPhoneNumber = document['userPhoneNumber'];
-        // String userName = document['userName'];
+        String userName = document['userName'];
         // String userCity = document['userCity'];
         // String userEmail = document['userEmail'];
         // String Admin = document['Admin'];
@@ -52,7 +53,7 @@ class _LoginScreenState extends State<LoginScreen> {
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('userPhoneNumber', userPhoneNumber);
         // await prefs.setString('userEmail', userEmail);
-        // await prefs.setString('userName', userName);
+        await prefs.setString('userName', userName);
         // await prefs.setString('userCity', userCity);
         // await prefs.setString('Admin', Admin);
 
@@ -64,14 +65,14 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         // If the phone number does not exist in the 'users' collection, return null
         print('User not found in Firestore');
-        // Navigator.push(
-        //   context,
-        //   MaterialPageRoute(
-        //     builder: (context) => userDetailsScreen(
-        //       userPhoneNumber_: _userPhoneNumber,
-        //     ),
-        //   ),
-        // );
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => userDetailsScreen(
+              userPhoneNumber_: _userPhoneNumber,
+            ),
+          ),
+        );
         setState(() {
           isLoading = false;
         });
@@ -197,18 +198,18 @@ class _LoginScreenState extends State<LoginScreen> {
     return Container(
       child: Scaffold(
         backgroundColor: Colors.grey[300],
-        body: SingleChildScrollView(
+         body: SingleChildScrollView(
           child: Container(
             padding: EdgeInsets.all(25),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(height: 70),
+                const SizedBox(height: 70),
                 Container(
                   width: 150,
                   height: 150,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     shape: BoxShape.circle,
                     image: DecorationImage(
                       image: AssetImage("assets/images/logo.png"),
@@ -216,7 +217,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                SizedBox(height: 50),
+                const SizedBox(height: 50),
                 Card(
                   elevation: 10,
                   shape: RoundedRectangleBorder(
@@ -224,7 +225,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   color: Colors.white,
                   child: Padding(
-                    padding: EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [

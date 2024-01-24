@@ -6,11 +6,10 @@ import 'package:game/Constants/HeightAndColor.dart';
 import 'package:game/GameScreens/HomeScreen.dart';
 import 'package:game/HelperFunctions/Toast.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:get/get.dart';
 
 class GameScreen extends StatefulWidget {
-  List<int> Cards;
-  GameScreen({required this.Cards});
-
+  List<int> Cards = [];
   @override
   State<GameScreen> createState() => _GameScreenState();
 }
@@ -29,10 +28,42 @@ class _GameScreenState extends State<GameScreen> {
   final CollectionReference cardCollection =
       FirebaseFirestore.instance.collection('playingCards');
 
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
   final FirebaseStorage storage = FirebaseStorage.instance;
   final String storagePath = 'playingCards';
 
   int numberOfRoundsLeft = 0;
+
+  Future<void> getCardsDataFromFirestore() async {
+    try {
+      // Reference to the Firestore collection
+      CollectionReference cardCollection =
+          FirebaseFirestore.instance.collection('cards');
+
+      // Get the document containing the cardsData field
+      QuerySnapshot<Object?> querySnapshot = await cardCollection.get();
+      print('documnetData : $querySnapshot');
+
+      // Check if the document exists
+      if (querySnapshot.docs.isNotEmpty) {
+        // Access the first document
+        dynamic cardsData = querySnapshot.docs.first['cardsData'];
+        print('dynamic : $cardsData');
+
+        // Check if cardsData is a List
+        if (cardsData is List) {
+          widget.Cards = cardsData.cast<int>();
+          print('widget.Cards : ${widget.Cards}');
+        } else {
+          print('cardsData is not a List');
+        }
+      } else {
+        print('Document does not exist');
+      }
+    } catch (e) {
+      print('Error getting cards: $e');
+    }
+  }
 
   void numberOfRoundsLeft_() {
     double cardsByThree = cardsCount / 3;
@@ -152,7 +183,9 @@ class _GameScreenState extends State<GameScreen> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    getCardsDataFromFirestore();
     // uploadCardImages();
+    numberOfRoundsLeft_();
   }
 
   @override
@@ -181,8 +214,7 @@ class _GameScreenState extends State<GameScreen> {
             ),
             FutureBuilder<String>(
               // Use FutureBuilder to fetch image URL and update the widget
-              future:
-                  getImageUrlFromFirestore(widget.Cards[cardsCount].toString()),
+              future: getImageUrlFromFirestore(0.toString()),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return CircularProgressIndicator();
@@ -190,8 +222,7 @@ class _GameScreenState extends State<GameScreen> {
                   return Text("Error loading image");
                 } else {
                   String imageUrl = snapshot.data ?? ''; // Get the image URL
-                  return DisplaySingleCard(
-                      Card: widget.Cards[cardsCount], imageUrl: imageUrl);
+                  return DisplaySingleCard(Card: 0, imageUrl: imageUrl);
                 }
               },
             ),
@@ -300,53 +331,25 @@ class DisplaySingleCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 150,
-      width: 150,
+      width: 115,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        // border: Border.all(
-        //   color: Colors.black, // Set your border color
-        //   width: 2.0,
-        // ),
-        color: Colors.red, // Set your background color
-        // image: imageUrl.isNotEmpty
-        //     ? DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover)
-        //     : null,
+        border: Border.all(
+          color: Colors.black, // Set your border color
+          width: 2.0,
+        ),
+        color: Colors.black, // Set your background color
       ),
-      child: Stack(
-        children: [
-          // Display Card value on top left
-          // Positioned(
-          //   top: 8,
-          //   left: 8,
-          //   child: Text(
-          //     Card.toString(),
-          //     style: const TextStyle(
-          //       fontSize: 16,
-          //       fontWeight: FontWeight.bold,
-          //     ),
-          //   ),
-          // ),
-          // // Display Card value on bottom right
-          // Positioned(
-          //   bottom: 8,
-          //   right: 8,
-          //   child: Text(
-          //     Card.toString(),
-          //     style: const TextStyle(
-          //       fontSize: 16,
-          //       fontWeight: FontWeight.bold,
-          //     ),
-          //   ),
-          // ),
-          CachedNetworkImage(
-            imageUrl: imageUrl,
-            fit: BoxFit.cover,
-            placeholder: (context, url) => Center(
-              child: CircularProgressIndicator(),
-            ),
-            errorWidget: (context, url, error) => Icon(Icons.error),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: CachedNetworkImage(
+          imageUrl: imageUrl,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => Center(
+            child: CircularProgressIndicator(),
           ),
-        ],
+          errorWidget: (context, url, error) => Icon(Icons.error),
+        ),
       ),
     );
   }
@@ -366,12 +369,12 @@ class StartNewGame extends StatelessWidget {
       children: [
         Text("cardsCount = $cardsCount  "),
         Text("userpoint : $userPoints"),
-        SizedBox(
+        const SizedBox(
           height: 30,
         ),
         TextButton(
           onPressed: () {
-            const HomeScreen();
+            Get.to(HomeScreen());
           },
           child: const Text(
             "Start New Game",
